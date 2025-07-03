@@ -13,3 +13,4 @@ Route::post('/pet/{petId}/uploadImage', [PetController::class, 'uploadImage']);
 Route::post('/pet', [PetController::class, 'store']);
 Route::get('/pet/findByStatus', [PetController::class, 'findByStatus']);
 Route::get('/pet/{petId}', [PetController::class, 'findPetById']);
+Route::post('/pet/{petId}', [PetController::class, 'updatePetWithForm']);

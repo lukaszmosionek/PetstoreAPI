@@ -104,4 +104,49 @@ class PetController extends Controller
 
         return response()->json($pet, 200);
     }
+
+    public function updatePetWithForm(Request $request, $petId)
+    {
+        if (!is_numeric($petId) || $petId <= 0) {
+            return response()->json([
+                'code' => 405,
+                'type' => 'error',
+                'message' => 'Invalid pet ID'
+            ], 405);
+        }
+
+        $pet = Pet::find($petId);
+
+        if (!$pet) {
+            return response()->json([
+                'code' => 405,
+                'type' => 'error',
+                'message' => 'Pet not found'
+            ], 405);
+        }
+
+        // Optional: validate input
+        $request->validate([
+            'name' => 'nullable|string',
+            'status' => 'nullable|string|in:available,pending,sold'
+        ]);
+
+        // Update fields if present
+        if ($request->has('name')) {
+            $pet->name = $request->input('name');
+        }
+
+        if ($request->has('status')) {
+            $pet->status = $request->input('status');
+        }
+
+        $pet->save();
+
+        return response()->json([
+            'code' => 200,
+            'type' => 'success',
+            'message' => 'Pet updated successfully',
+            'data' => $pet
+        ]);
+    }
 }
