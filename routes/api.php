@@ -10,3 +10,4 @@ Route::get('/user', function (Request $request) {
 
 
 Route::post('/pet/{petId}/uploadImage', [PetController::class, 'uploadImage']);
+Route::post('/pet', [PetController::class, 'store']);

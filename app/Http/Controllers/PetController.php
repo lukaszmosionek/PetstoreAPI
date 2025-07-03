@@ -7,6 +7,30 @@ use Illuminate\Http\Request;
 
 class PetController extends Controller
 {
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+            'category.id' => 'required|integer',
+            'category.name' => 'required|string',
+            'name' => 'required|string',
+            'photoUrls' => 'required|array',
+            'photoUrls.*' => 'string',
+            'tags' => 'required|array',
+            'tags.*.id' => 'required|integer',
+            'tags.*.name' => 'required|string',
+            'status' => 'required|in:available,pending,sold',
+        ]);
+
+        // You can replace this with actual DB logic if needed
+        return response()->json([
+            'code' => 0,
+            'type' => 'success',
+            'message' => 'Pet added successfully',
+            'data' => $validated,
+        ]);
+    }
+
     public function uploadImage($petId, Request $request)
     {
         $request->validate([
