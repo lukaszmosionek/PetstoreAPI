@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FindPetsByStatusRequest;
 use App\Http\Requests\StorePetRequest;
 use App\Http\Requests\UpdatePetRequest;
+use App\Http\Requests\UploadImagePetRequest;
 use App\Models\Pet;
 use Illuminate\Http\Request;
 use App\Services\PetService;
@@ -75,47 +78,20 @@ class PetController extends Controller
         ]);
     }
 
-    public function findByStatus(Request $request)
+    public function findByStatus(FindPetsByStatusRequest $request)
     {
-        $allowedStatuses = ['available', 'pending', 'sold'];
-
-        $statuses = explode(',', $request->query('status'));
-
-        // Validate status values
-        foreach ($statuses as $status) {
-            if (!in_array($status, $allowedStatuses)) {
-                return response()->json([
-                    'code' => 400,
-                    'type' => 'error',
-                    'message' => 'Invalid status value: ' . $status
-                ], 400);
-            }
-        }
 
         $pets = Pet::with(['category', 'tags']) // assumes relationships exist
-                    ->whereIn('status', $statuses)
+                    ->whereIn('status', $request->statuses)
                     ->get();
 
         return response()->json($pets, 200);
     }
 
-    public function uploadImage($petId, Request $request)
+    public function uploadImage($petId, UploadImagePetRequest $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,gif',
-            'additionalMetadata' => 'nullable|string',
-        ]);
 
-        // Store the file
-        if ($request->hasFile('file')) {
-            $path = $request->file('file')->store("pets/{$petId}", 'public');
-        } else {
-            return response()->json([
-                'code' => 1,
-                'type' => 'error',
-                'message' => 'No file uploaded.',
-            ], 400);
-        }
+        $path = $request->file('file')->store("pets/{$petId}", 'public');
 
         return response()->json([
             'code' => 0,
