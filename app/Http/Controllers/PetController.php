@@ -3,31 +3,141 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePetRequest;
+use App\Models\Pet;
 use Illuminate\Http\Request;
+use App\Services\PetService;
 
 class PetController extends Controller
 {
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'id' => 'required|integer',
-            'category.id' => 'required|integer',
-            'category.name' => 'required|string',
-            'name' => 'required|string',
-            'photoUrls' => 'required|array',
-            'photoUrls.*' => 'string',
-            'tags' => 'required|array',
-            'tags.*.id' => 'required|integer',
-            'tags.*.name' => 'required|string',
-            'status' => 'required|in:available,pending,sold',
-        ]);
+    protected PetService $petService;
 
-        // You can replace this with actual DB logic if needed
+    public function __construct(PetService $petService)
+    {
+        $this->petService = $petService;
+    }
+
+    public function store(StorePetRequest $request)
+    {
+        $data = $request->validated();
+        $pet = $this->petService->storePet($data);
+
         return response()->json([
             'code' => 0,
             'type' => 'success',
             'message' => 'Pet added successfully',
-            'data' => $validated,
+            'data' => $data,
+        ]);
+    }
+
+    public function show($petId)
+    {
+        // Validate ID
+        if (!is_numeric($petId) || $petId <= 0) {
+            return response()->json([
+                'code' => 400,
+                'type' => 'error',
+                'message' => 'Invalid ID supplied'
+            ], 400);
+        }
+
+        // Fetch pet with relationships
+        $pet = Pet::with(['category', 'tags'])->find($petId);
+
+        if (!$pet) {
+            return response()->json([
+                'code' => 404,
+                'type' => 'error',
+                'message' => 'Pet not found'
+            ], 404);
+        }
+
+        return response()->json($pet, 200);
+    }
+
+    public function update(Request $request, $petId)
+    {
+        if (!is_numeric($petId) || $petId <= 0) {
+            return response()->json([
+                'code' => 405,
+                'type' => 'error',
+                'message' => 'Invalid pet ID'
+            ], 405);
+        }
+
+        $pet = Pet::find($petId);
+
+        if (!$pet) {
+            return response()->json([
+                'code' => 405,
+                'type' => 'error',
+                'message' => 'Pet not found'
+            ], 405);
+        }
+
+        // Optional: validate input
+        $request->validate([
+            'name' => 'nullable|string',
+            'status' => 'nullable|string|in:available,pending,sold'
+        ]);
+
+        // Update fields if present
+        if ($request->has('name')) {
+            $pet->name = $request->input('name');
+        }
+
+        if ($request->has('status')) {
+            $pet->status = $request->input('status');
+        }
+
+        $pet->save();
+
+        return response()->json([
+            'code' => 200,
+            'type' => 'success',
+            'message' => 'Pet updated successfully',
+            'data' => $pet
+        ]);
+    }
+
+    public function delete(Request $request, $petId)
+    {
+        // Optional: Check API key
+        $apiKey = $request->header('api_key');
+        if ($apiKey !== 'your_expected_api_key') {
+            return response()->json([
+                'code' => 401,
+                'type' => 'error',
+                'message' => 'Unauthorized: Invalid API key'
+            ], 401);
+        }
+
+        // Validate ID
+        if (!is_numeric($petId) || $petId <= 0) {
+            return response()->json([
+                'code' => 400,
+                'type' => 'error',
+                'message' => 'Invalid ID supplied'
+            ], 400);
+        }
+
+        // Find the pet
+        $pet = Pet::find($petId);
+
+        if (!$pet) {
+            return response()->json([
+                'code' => 404,
+                'type' => 'error',
+                'message' => 'Pet not found'
+            ], 404);
+        }
+
+        $pet->delete();
+
+        return response()->json([
+            'code' => 200,
+            'type' => 'success',
+            'message' => 'Pet deleted successfully'
         ]);
     }
 
@@ -77,117 +187,6 @@ class PetController extends Controller
             'code' => 0,
             'type' => 'success',
             'message' => "Image uploaded successfully to path: $path",
-        ]);
-    }
-
-    public function findPetById($petId)
-    {
-        // Validate ID
-        if (!is_numeric($petId) || $petId <= 0) {
-            return response()->json([
-                'code' => 400,
-                'type' => 'error',
-                'message' => 'Invalid ID supplied'
-            ], 400);
-        }
-
-        // Fetch pet with relationships
-        $pet = Pet::with(['category', 'tags'])->find($petId);
-
-        if (!$pet) {
-            return response()->json([
-                'code' => 404,
-                'type' => 'error',
-                'message' => 'Pet not found'
-            ], 404);
-        }
-
-        return response()->json($pet, 200);
-    }
-
-    public function updatePetWithForm(Request $request, $petId)
-    {
-        if (!is_numeric($petId) || $petId <= 0) {
-            return response()->json([
-                'code' => 405,
-                'type' => 'error',
-                'message' => 'Invalid pet ID'
-            ], 405);
-        }
-
-        $pet = Pet::find($petId);
-
-        if (!$pet) {
-            return response()->json([
-                'code' => 405,
-                'type' => 'error',
-                'message' => 'Pet not found'
-            ], 405);
-        }
-
-        // Optional: validate input
-        $request->validate([
-            'name' => 'nullable|string',
-            'status' => 'nullable|string|in:available,pending,sold'
-        ]);
-
-        // Update fields if present
-        if ($request->has('name')) {
-            $pet->name = $request->input('name');
-        }
-
-        if ($request->has('status')) {
-            $pet->status = $request->input('status');
-        }
-
-        $pet->save();
-
-        return response()->json([
-            'code' => 200,
-            'type' => 'success',
-            'message' => 'Pet updated successfully',
-            'data' => $pet
-        ]);
-    }
-
-    public function deletePet(Request $request, $petId)
-    {
-        // Optional: Check API key
-        $apiKey = $request->header('api_key');
-        if ($apiKey !== 'your_expected_api_key') {
-            return response()->json([
-                'code' => 401,
-                'type' => 'error',
-                'message' => 'Unauthorized: Invalid API key'
-            ], 401);
-        }
-
-        // Validate ID
-        if (!is_numeric($petId) || $petId <= 0) {
-            return response()->json([
-                'code' => 400,
-                'type' => 'error',
-                'message' => 'Invalid ID supplied'
-            ], 400);
-        }
-
-        // Find the pet
-        $pet = Pet::find($petId);
-
-        if (!$pet) {
-            return response()->json([
-                'code' => 404,
-                'type' => 'error',
-                'message' => 'Pet not found'
-            ], 404);
-        }
-
-        $pet->delete();
-
-        return response()->json([
-            'code' => 200,
-            'type' => 'success',
-            'message' => 'Pet deleted successfully'
         ]);
     }
 
