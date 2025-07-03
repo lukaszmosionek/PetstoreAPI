@@ -149,4 +149,46 @@ class PetController extends Controller
             'data' => $pet
         ]);
     }
+
+    public function deletePet(Request $request, $petId)
+    {
+        // Optional: Check API key
+        $apiKey = $request->header('api_key');
+        if ($apiKey !== 'your_expected_api_key') {
+            return response()->json([
+                'code' => 401,
+                'type' => 'error',
+                'message' => 'Unauthorized: Invalid API key'
+            ], 401);
+        }
+
+        // Validate ID
+        if (!is_numeric($petId) || $petId <= 0) {
+            return response()->json([
+                'code' => 400,
+                'type' => 'error',
+                'message' => 'Invalid ID supplied'
+            ], 400);
+        }
+
+        // Find the pet
+        $pet = Pet::find($petId);
+
+        if (!$pet) {
+            return response()->json([
+                'code' => 404,
+                'type' => 'error',
+                'message' => 'Pet not found'
+            ], 404);
+        }
+
+        $pet->delete();
+
+        return response()->json([
+            'code' => 200,
+            'type' => 'success',
+            'message' => 'Pet deleted successfully'
+        ]);
+    }
+
 }

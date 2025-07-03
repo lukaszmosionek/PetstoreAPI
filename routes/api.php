@@ -14,3 +14,4 @@ Route::post('/pet', [PetController::class, 'store']);
 Route::get('/pet/findByStatus', [PetController::class, 'findByStatus']);
 Route::get('/pet/{petId}', [PetController::class, 'findPetById']);
 Route::post('/pet/{petId}', [PetController::class, 'updatePetWithForm']);
+Route::delete('/pet/{petId}', [PetController::class, 'deletePet']);
