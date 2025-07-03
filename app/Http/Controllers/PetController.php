@@ -9,6 +9,7 @@ use App\Http\Requests\StorePetRequest;
 use App\Http\Requests\UpdatePetRequest;
 use App\Http\Requests\UploadImagePetRequest;
 use App\Models\Pet;
+use App\Services\PetImageService;
 use Illuminate\Http\Request;
 use App\Services\PetService;
 
@@ -36,9 +37,7 @@ class PetController extends Controller
 
     public function show($petId)
     {
-        // Fetch pet with relationships
-        $pet = Pet::with(['category', 'tags'])->find($petId);
-
+        $pet = Pet::with(['category', 'tags'])->findorFail($petId);
         return response()->json($pet, 200);
     }
 
@@ -55,7 +54,7 @@ class PetController extends Controller
         ]);
     }
 
-    public function delete(Request $request, $petId)
+    public function destroy(Request $request, $petId)
     {
         // Optional: Check API key
         $apiKey = $request->header('api_key');
@@ -80,7 +79,6 @@ class PetController extends Controller
 
     public function findByStatus(FindPetsByStatusRequest $request)
     {
-
         $pets = Pet::with(['category', 'tags']) // assumes relationships exist
                     ->whereIn('status', $request->statuses)
                     ->get();
@@ -88,15 +86,15 @@ class PetController extends Controller
         return response()->json($pets, 200);
     }
 
-    public function uploadImage($petId, UploadImagePetRequest $request)
+    public function uploadImage($petId, UploadImagePetRequest $request, PetImageService $petImageService)
     {
-
-        $path = $request->file('file')->store("pets/{$petId}", 'public');
+        $pet = $petImageService->uploadImage($petId, $request->file('file'));
 
         return response()->json([
             'code' => 0,
             'type' => 'success',
-            'message' => "Image uploaded successfully to path: $path",
+            'message' => "Image uploaded successfully",
+            'data' => $pet
         ]);
     }
 

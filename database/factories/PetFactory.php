@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\OrderStatus;
 use App\Models\Category;
 use App\Models\Pet;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,7 +20,7 @@ class PetFactory extends Factory
             'name' => $this->faker->firstName(),
             'category_id' => Category::inRandomOrder()->first()?->id ?? Category::factory(),
             'photoUrls' => [$this->faker->imageUrl()],
-            'status' => $this->faker->randomElement(['available', 'pending', 'sold']),
+            'status' => $this->faker->randomElement(OrderStatus::toArray()),
         ];
     }
 }

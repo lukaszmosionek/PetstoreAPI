@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\OrderStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,7 +17,7 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->json('photoUrls')->nullable();
-            $table->enum('status', ['available', 'pending', 'sold'])->default('available');
+            $table->enum('status', OrderStatus::toArray())->default(OrderStatus::Available);
             $table->timestamps();
         });
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\OrderStatus;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePetRequest extends FormRequest
@@ -31,7 +32,7 @@ class UpdatePetRequest extends FormRequest
             'tags' => 'required|array',
             'tags.*.id' => 'required|integer',
             'tags.*.name' => 'required|string',
-            'status' => 'required|in:available,pending,sold',
+            'status' => 'required|in:' . implode(',', OrderStatus::toArray()),
         ];
     }
 }
