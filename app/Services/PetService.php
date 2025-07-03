@@ -17,11 +17,11 @@ class PetService
         $this->tagService = $tagService;
     }
 
-    public function storePet(array $data): Pet
+    public function storeOrUpdatePet(array $data, $petId = false): Pet
     {
         $category = $this->categoryService->createOrUpdate($data['category']);
 
-        $pet = new Pet();
+        $pet = $petId ? Pet::find($petId) : new Pet();
         $pet->id = $data['id'];
         $pet->category()->associate($category);
         $pet->name = $data['name'];
